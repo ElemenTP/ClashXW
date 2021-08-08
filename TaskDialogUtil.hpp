@@ -103,10 +103,26 @@ HRESULT TaskDialogInput(HWND hWndOwner, HINSTANCE hInstance, PCWSTR windowTitle,
 		}
 		case WM_CTLCOLORSTATIC:
 		{
+			bool darkModeEnabled = ShouldAppsUseDarkMode() && !IsHighContrast();
 			HDC hdc = reinterpret_cast<HDC>(wParam);
-			SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
-			SetBkColor(hdc, GetSysColor(COLOR_WINDOW));
+			COLORREF textColor = DarkWindowTextColor;
+			COLORREF bkColor = DarkWindowBkColor;
+
+			if (!darkModeEnabled)
+			{
+				textColor = GetSysColor(COLOR_WINDOWTEXT);
+				bkColor = GetSysColor(COLOR_WINDOW);
+			}
+
+			SetTextColor(hdc, textColor);
+			SetBkColor(hdc, bkColor);
 			SetBkMode(hdc, TRANSPARENT);
+			if (darkModeEnabled)
+			{
+				if (!hDarkBrush)
+					hDarkBrush.reset(CreateSolidBrush(DarkWindowBkColor));
+				return reinterpret_cast<INT_PTR>(hDarkBrush.get());
+			}
 			return reinterpret_cast<INT_PTR>(GetSysColorBrush(COLOR_WINDOW));
 		}
 		case WM_COMMAND:
