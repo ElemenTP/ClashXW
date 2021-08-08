@@ -91,8 +91,8 @@ HRESULT TaskDialogInput(HWND hWndOwner, HINSTANCE hInstance, PCWSTR windowTitle,
 	HWND hWndDirectUI = nullptr, hWndProgressBarSink = nullptr;
 	ControlsVector hWndControls;
 	wil::unique_hfont hFont;
+	static wil::unique_hbrush hDarkBrush;
 	auto subclass = [&hWndDirectUI, &hWndProgressBarSink, &hWndControls, &hFont, &input, &editTextChanged](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, [[maybe_unused]] UINT_PTR uIdSubclass) -> LRESULT {
-		static wil::unique_hbrush hDarkBrush;
 		switch (uMsg)
 		{
 		case WM_DPICHANGED:
