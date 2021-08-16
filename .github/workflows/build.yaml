@@ -1,8 +1,6 @@
 name: Build
 
-on:
-  push:
-    tags: [ '**' ]
+on: workflow_dispatch
 
 jobs:
   build:
@@ -33,84 +31,15 @@ jobs:
         nuget restore ClashXW.sln
       shell: bash
     - run: |
-        vcpkg install skyr-url --triplet=arm64-windows-static
         vcpkg install skyr-url --triplet=x64-windows-static
-        vcpkg install skyr-url --triplet=x86-windows-static
         vcpkg integrate install
       shell: cmd
     - run: |
         Start-Job -Init ([ScriptBlock]::Create("Set-Location '$pwd'")) -Script {
           msbuild ClashXW.sln "-p:Configuration=Release;Platform=x64" }
-        Start-Job -Init ([ScriptBlock]::Create("Set-Location '$pwd'")) -Script {
-          msbuild ClashXW.sln "-p:Configuration=Release;Platform=x86" }
-        Start-Job -Init ([ScriptBlock]::Create("Set-Location '$pwd'")) -Script {
-          msbuild ClashXW.sln "-p:Configuration=Release;Platform=ARM64" }
         Get-Job | Wait-Job | Receive-Job
       shell: powershell
-    - run: sh create_package.sh
-      shell: bash
     - uses: actions/upload-artifact@v2
       with:
         name: ClashXW64
         path: x64/Release/ClashXW64.exe
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ClashXW64
-        path: x64/Release/ClashXW64.pdb
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ClashXW32
-        path: Release/ClashXW32.exe
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ClashXW32
-        path: Release/ClashXW32.pdb
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ClashXWARM64
-        path: ARM64/Release/ClashXWARM64.exe
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ClashXWARM64
-        path: ARM64/Release/ClashXWARM64.pdb
-    - name: Get git tag version
-      id: git_tag_version
-      run: echo "::set-output name=version::$(git describe --tags)"
-      shell: bash
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: ${{ github.ref }}
-        draft: true
-        prerelease: false
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: pkg/64.zip
-        asset_name: ClashXW64-${{ steps.git_tag_version.outputs.version }}.zip
-        asset_content_type: application/octet-stream
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: pkg/32.zip
-        asset_name: ClashXW32-${{ steps.git_tag_version.outputs.version }}.zip
-        asset_content_type: application/octet-stream
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: pkg/ARM64.zip
-        asset_name: ClashXWARM64-${{ steps.git_tag_version.outputs.version }}.zip
-        asset_content_type: application/octet-stream
